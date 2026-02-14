@@ -1,5 +1,6 @@
 """
 Utils package for data preprocessing, statistics, visualization, and ML utilities.
+The package is my own personal library for data analysis and machine learning projects.
 """
 
 # Core preprocessing functions (always available)
@@ -56,21 +57,25 @@ __all__ = [
     'filter_outliers',
     'feature_scaling',
     'feature_encoding',
+
     # Feature selection
     'calculate_correlation_tabular',
     'analyze_categorical_relationships',
     'calculate_vif',
     'calculate_feature_importance',
+    
     # Statistics
     'describe_numerical_combined',
     'describe_categorical_combined',
     'describe_date_columns',
     'identify_distribution_types',
+    
     # Visualization
     'plot_dynamic_hisplots_kdeplots',
     'plot_dynamic_boxplots_violinplots',
     'plot_dynamic_countplot',
     'plot_correlation_heatmap',
+    
     # ML regression
     'eval_regression',
     'tune_pipelines',

@@ -398,11 +398,8 @@ def tune_pipelines(
                     print(f"  {param}: {value}")
                 
                 # Show test score with best estimator
-                y_pred_test = model.best_estimator_.predict(X_test)
-                test_score = get_scorer(scoring)._score_func(y_test, y_pred_test)
-                # Handle negative scoring metrics
-                if scoring.startswith('neg_'):
-                    test_score = -test_score
+                scorer = get_scorer(scoring)
+                test_score = scorer(model.best_estimator_, X_test, y_test)
                 print(f"\nTest {scoring}: {test_score:.4f}")
 
         except Exception as e:
@@ -456,18 +453,13 @@ def _plot_validation_curves(
             # Fit and evaluate
             current_pipeline.fit(X_train, y_train)
 
-            # Get predictions and scores
-            y_pred_train = current_pipeline.predict(X_train)
-            y_pred_test = current_pipeline.predict(X_test)
-            score_func = get_scorer(scoring)._score_func
-
-            train_score = score_func(y_train, y_pred_train)
-            test_score = score_func(y_test, y_pred_test)
+            # Use the scorer directly (it handles the correct signature)
+            scorer = get_scorer(scoring)
+            train_score = scorer(current_pipeline, X_train, y_train)
+            test_score = scorer(current_pipeline, X_test, y_test)
             
-            # Handle negative scoring metrics (convert to positive for display)
-            if scoring.startswith('neg_'):
-                train_score = -train_score
-                test_score = -test_score
+            # Scores are already in the correct sign (negative for errors, positive for R2)
+            # No need to negate here - display them as-is for validation curves
 
             train_scores.append(train_score)
             test_scores.append(test_score)
@@ -480,11 +472,9 @@ def _plot_validation_curves(
         plt.plot(param_values, train_scores, 'o-', label='Train', linewidth=2)
         plt.plot(param_values, test_scores, 'o-', label='Test', linewidth=2)
 
-        # Find best parameter value (for error metrics, lower is better)
-        if scoring.startswith('neg_'):
-            best_idx = np.argmin(test_scores)  # Lower error is better
-        else:
-            best_idx = np.argmax(test_scores)  # Higher score is better (e.g., R2)
+        # Find best parameter value
+        # For all scorers in sklearn: higher is better (errors are negated)
+        best_idx = np.argmax(test_scores)
         best_value = param_values[best_idx]
         best_score = test_scores[best_idx]
 
@@ -628,11 +618,11 @@ def get_hyperparameters(model_name: str, search_method: str = 'grid') -> dict:
         },
         'randomforest': {
             'rf__n_estimators': [50, 100, 200],
-            'rf__criterion': ['squared_error', 'friedman_mse', 'absolute_error'],
-            'rf__max_depth': [5, 10, 15, 20],
-            'rf__min_samples_split': [2, 5, 10],
+            'rf__criterion': ['squared_error', 'friedman_mse'],
+            'rf__max_depth': [10, 15, 20, 30],
+            'rf__min_samples_split': [2, 5],
             'rf__max_features': ['sqrt', 'log2'],
-            'rf__min_samples_leaf': [1, 2, 4]
+            'rf__min_samples_leaf': [1, 2]
         },
         'gb': {
             'gb__n_estimators': [50, 100, 200],
