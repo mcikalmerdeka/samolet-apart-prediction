@@ -1,6 +1,20 @@
 """
-Gradio Inference Script for Apartment Price Prediction
+Gradio Inference Script for Apartment Price Prediction (v2 - Using SKLearn Encoders)
 This script creates an interactive UI for predicting apartment prices using the trained Random Forest model.
+
+Developed for: SAMOLET Group (ПАО «ГК «Самолет»)
+Company: One of Russia's largest residential real estate developers (MOEX: SMLT)
+Founded: 2012, Headquartered in Moscow
+Operations: Full-cycle development across multiple Russian regions
+
+Dataset Context: Model trained on SAMOLET's property portfolio, primarily concentrated in 
+Moscow region and surrounding areas (113 unique districts/locations).
+
+Key improvements:
+- Uses fitted sklearn encoders (OrdinalEncoder, OneHotEncoder, TargetEncoder)
+- Includes District feature with mean encoding for geographical price variation
+- Proper handling of unknown categories
+- Consistent preprocessing with training pipeline
 """
 
 import gradio as gr
@@ -10,35 +24,54 @@ import numpy as np
 from pathlib import Path
 import warnings
 
+# Import utils for applying encoders
+from utils import feature_encoding, feature_scaling
+
 # Import sklearn for unpickling
 from sklearn.ensemble import RandomForestRegressor
 
 warnings.filterwarnings('ignore')
 
-# Load the trained model and feature names
+# Load the trained model and artifacts
 MODEL_PATH = Path('model_artifacts/rf_tuned_model.joblib')
 FEATURE_NAMES_PATH = Path('model_artifacts/feature_names.joblib')
+FEATURE_ENCODERS_PATH = Path('model_artifacts/feature_encoders.joblib')
 SCALING_STATS_PATH = Path('model_artifacts/scaling_stats.joblib')
-ENCODINGS_PATH = Path('model_artifacts/encodings.joblib')
+CATEGORICAL_VALUES_PATH = Path('model_artifacts/categorical_values.joblib')
 TEST_DATA_PREPROCESSED_PATH = Path('data/test_data_5%_preprocessed.csv')
 TEST_DATA_RAW_PATH = Path('data/test_data_5%_raw.csv')
 
 try:
     model = joblib.load(MODEL_PATH)
     feature_names = joblib.load(FEATURE_NAMES_PATH)
+    feature_encoders = joblib.load(FEATURE_ENCODERS_PATH)
     scaling_stats = joblib.load(SCALING_STATS_PATH)
-    encodings = joblib.load(ENCODINGS_PATH)
+    categorical_values = joblib.load(CATEGORICAL_VALUES_PATH)
     
     test_data_preprocessed = pd.read_csv(TEST_DATA_PREPROCESSED_PATH)
     test_data_raw = pd.read_csv(TEST_DATA_RAW_PATH)
-    print(f"Model loaded successfully")
-    print(f"Expected features: {len(feature_names)} features")
-    print(f"Test data loaded: {len(test_data_preprocessed)} samples")
+    
+    print(f"✅ Model loaded successfully")
+    print(f"✅ Expected features: {len(feature_names)} features")
+    print(f"✅ Feature encoders loaded:")
+    print(f"   - Ordinal: {[k for k in feature_encoders.keys() if k.startswith('ordinal_')]}")
+    print(f"   - OneHot: {[k for k in feature_encoders.keys() if k.startswith('onehot_')]}")
+    print(f"   - Mean: {'mean_encoder' in feature_encoders}")
+    print(f"✅ Test data loaded: {len(test_data_preprocessed)} samples")
+    print(f"✅ Available locations: {len(categorical_values['District'])} unique districts/locations")
+    print(f"\n💼 Model trained on SAMOLET Group property portfolio")
+    print(f"   (primarily Moscow region and surrounding areas)")
 except Exception as e:
-    print(f"Error loading model artifacts: {e}")
+    print(f"❌ Error loading model artifacts: {e}")
     raise
 
-# Preprocessing functions (matching notebook preprocessing)
+# Ordinal categories (needed for encoding)
+ORDINAL_CATEGORIES = {
+    "Class": ["Эконом", "Комфорт", "Бизнес", "Элит"],
+    "Finishing": ["Нет данных", "Без отделки", "Подчистовая", "Чистовая", "С мебелью (частично)", "С мебелью"]
+}
+
+# Preprocessing function (matching notebook preprocessing)
 def preprocess_input(
     total_area: float,
     floors_total: int,
@@ -55,6 +88,7 @@ def preprocess_input(
     mortgage: str,
     subsidies: str,
     layout: str,
+    district: str,
     area_without_balcony: float = None,
     living_area: float = None,
     kitchen_area: float = None,
@@ -62,6 +96,7 @@ def preprocess_input(
 ):
     """
     Preprocess input data following the same pipeline as in the notebook.
+    Uses fitted sklearn encoders for proper transformation.
     
     Returns:
         DataFrame with processed features ready for model prediction
@@ -87,56 +122,68 @@ def preprocess_input(
         'ApartmentOption': apartment_option,
         'Mortgage': mortgage,
         'Subsidies': subsidies,
-        'Layout': layout
+        'Layout': layout,
+        'District': district
     }])
     
-    # 1. Feature Encoding
-    # Ordinal encoding for Class and Finishing (using loaded encodings)
-    input_data['Class'] = input_data['Class'].map(encodings['class_mapping'])
-    input_data['Finishing'] = input_data['Finishing'].map(encodings['finishing_mapping'])
+    # 1. Feature Encoding using fitted sklearn encoders
+    ordinal_cols = ["Class", "Finishing"]
+    nominal_cols = ["BuildingType", "PropertyType", "PropertyCategory", "Apartments", 
+                    "ApartmentOption", "Mortgage", "Subsidies", "Layout"]
+    mean_encoding_cols = ["District"]
     
-    # One-hot encoding for PropertyType (and other nominals if needed)
-    nominal_columns = ["BuildingType", "PropertyType", "PropertyCategory", "Apartments", 
-                       "ApartmentOption", "Mortgage", "Subsidies", "Layout"]
-    
-    input_data = pd.get_dummies(input_data, columns=nominal_columns, prefix=nominal_columns)
+    input_encoded, _ = feature_encoding(
+        data=input_data,
+        ordinal_columns=ordinal_cols,
+        nominal_columns=nominal_cols,
+        mean_encoding_columns=mean_encoding_cols,
+        ordinal_categories=ORDINAL_CATEGORIES,
+        encoders=feature_encoders,
+        handle_unknown='ignore'  # Handle unknown categories gracefully
+    )
     
     # 2. Select only the features used in training
-    # Extract base features and PropertyType columns
-    selected_features = []
+    # Ensure all expected features exist
     for feature in feature_names:
-        if feature in input_data.columns:
-            selected_features.append(feature)
-        else:
-            # If a one-hot encoded column is missing, add it with value 0
-            input_data[feature] = 0
-            selected_features.append(feature)
+        if feature not in input_encoded.columns:
+            input_encoded[feature] = 0
     
-    # Ensure columns are in the same order as training
-    input_data = input_data[feature_names]
+    # Keep only the features in the correct order
+    input_encoded = input_encoded[feature_names]
     
-    # 3. Feature Scaling (using actual statistics from training data)
-    # MinMax scaling for Class, Phase, Finishing
-    for col in ['Class', 'Phase', 'Finishing']:
-        if col in input_data.columns and col in scaling_stats['minmax']:
+    # 3. Feature Scaling using training statistics
+    scaling_config = {
+        "minmax": {
+            "columns": ["Class", "Phase", "Finishing"]
+        },
+        "standard": {
+            "columns": ["TotalArea", "CeilingHeight", "FloorsTotal", "District"]
+        }
+    }
+    
+    # Create a scaler dict from scaling_stats (mimic the format expected by feature_scaling)
+    # Note: We're manually applying scaling here for simplicity
+    # Alternatively, we could have saved the sklearn scaler objects
+    
+    input_scaled = input_encoded.copy()
+    
+    # Apply MinMax scaling
+    for col in scaling_config['minmax']['columns']:
+        if col in input_scaled.columns and col in scaling_stats['minmax']:
             min_val = scaling_stats['minmax'][col]['min']
             max_val = scaling_stats['minmax'][col]['max']
-            input_data[col] = (input_data[col] - min_val) / (max_val - min_val)
+            if max_val > min_val:
+                input_scaled[col] = (input_scaled[col] - min_val) / (max_val - min_val)
     
-    # Standard scaling for CeilingHeight
-    if 'CeilingHeight' in input_data.columns:
-        mean_val = scaling_stats['standard']['CeilingHeight']['mean']
-        std_val = scaling_stats['standard']['CeilingHeight']['std']
-        input_data['CeilingHeight'] = (input_data['CeilingHeight'] - mean_val) / std_val
+    # Apply Standard scaling
+    for col in scaling_config['standard']['columns']:
+        if col in input_scaled.columns and col in scaling_stats['standard']:
+            mean_val = scaling_stats['standard'][col]['mean']
+            std_val = scaling_stats['standard'][col]['std']
+            if std_val > 0:
+                input_scaled[col] = (input_scaled[col] - mean_val) / std_val
     
-    # Robust scaling for TotalArea and FloorsTotal
-    for col in ['TotalArea', 'FloorsTotal']:
-        if col in input_data.columns and col in scaling_stats['robust']:
-            median_val = scaling_stats['robust'][col]['median']
-            iqr_val = scaling_stats['robust'][col]['iqr']
-            input_data[col] = (input_data[col] - median_val) / iqr_val
-    
-    return input_data
+    return input_scaled
 
 
 def predict_price(
@@ -155,6 +202,7 @@ def predict_price(
     mortgage: str,
     subsidies: str,
     layout: str,
+    district: str,
     area_without_balcony: float = None,
     living_area: float = None,
     kitchen_area: float = None,
@@ -185,6 +233,7 @@ def predict_price(
             mortgage=mortgage,
             subsidies=subsidies,
             layout=layout,
+            district=district,
             area_without_balcony=area_without_balcony,
             living_area=living_area,
             kitchen_area=kitchen_area,
@@ -209,6 +258,7 @@ def predict_price(
         **Input Summary:**
         - Area: {total_area} m²
         - Floor: {floor} / {floors_total}
+        - District: {district}
         - Class: {class_option}
         - Finishing: {finishing}
         """
@@ -216,7 +266,7 @@ def predict_price(
         return result
         
     except Exception as e:
-        return f"❌ Error during prediction: {str(e)}"
+        return f"❌ Error during prediction: {str(e)}\n\nDetails: {repr(e)}"
 
 
 def predict_from_test_data(sample_index: int):
@@ -265,6 +315,7 @@ def predict_from_test_data(sample_index: int):
         
         #### Sample Features (Original Values):
         - **TotalArea**: {sample_raw['TotalArea']} m²
+        - **District**: {sample_raw['District']}
         - **Class**: {sample_raw['Class']}
         - **CeilingHeight**: {sample_raw['CeilingHeight']} m
         - **Floor**: {sample_raw['Floor']} / {sample_raw['FloorsTotal']}
@@ -298,15 +349,25 @@ def create_gradio_interface():
     mortgage_choices = ["Да", "Нет"]
     subsidies_choices = ["Да", "Нет"]
     layout_choices = ["Да", "Нет", "Евро"]
+    district_choices = categorical_values['District']  # Load from artifacts
     
     # Create the interface with organized input sections
     with gr.Blocks(title="🏠 Apartment Price Predictor", theme=gr.themes.Soft()) as demo:
         
         gr.Markdown("""
-        # 🏠 Apartment Price Prediction System
+        # 🏠 Apartment Price Prediction System (v2)
         
-        This tool predicts apartment prices in Moscow based on layout characteristics and property features.
-        The model is trained on real estate data and uses a **Random Forest Regressor** with optimized hyperparameters.
+        **Developed for SAMOLET Group** - One of Russia's largest residential real estate developers
+        
+        This tool predicts apartment prices based on layout characteristics and property features.
+        The model uses **Random Forest Regressor** with proper sklearn preprocessing pipeline.
+        
+        **Model Coverage**: Trained on SAMOLET's property portfolio, primarily from Moscow region 
+        and surrounding areas (113 unique locations in dataset).
+        
+        **NEW Features:** 
+        - District/Location feature with mean encoding for geographical price prediction
+        - Production-ready sklearn pipeline ensures consistent preprocessing
         
         ---
         """)
@@ -380,6 +441,13 @@ def create_gradio_interface():
                     
                     with gr.Column():
                         gr.Markdown("### 🏢 Property Details")
+                        
+                        district = gr.Dropdown(
+                            choices=district_choices,
+                            label="District / Location (Район)",
+                            value=district_choices[0] if district_choices else None,
+                            info="Development location - affects price significantly"
+                        )
                         
                         class_option = gr.Dropdown(
                             choices=class_choices,
@@ -465,7 +533,7 @@ def create_gradio_interface():
                         total_area, floors_total, phase, floor, ceiling_height,
                         class_option, building_type, property_type, property_category,
                         apartments, finishing, apartment_option, mortgage, subsidies, layout,
-                        area_without_balcony, living_area, kitchen_area, hallway_area
+                        district, area_without_balcony, living_area, kitchen_area, hallway_area
                     ],
                     outputs=output_manual
                 )
@@ -502,10 +570,17 @@ def create_gradio_interface():
         ---
         ### ℹ️ Model Information
         
-        - **Model:** Random Forest Regressor (Tuned)
-        - **Features Used:** TotalArea, Class, CeilingHeight, FloorsTotal, Phase, Finishing, PropertyType
+        - **Client:** SAMOLET Group (ПАО «ГК «Самолет») - Russia's leading residential developer
+        - **Model:** Random Forest Regressor (Tuned) - R² = 0.9787
+        - **Features Used:** TotalArea, Class, CeilingHeight, FloorsTotal, Phase, Finishing, District (mean-encoded), PropertyType (one-hot)
+        - **Preprocessing:** sklearn OrdinalEncoder, OneHotEncoder, TargetEncoder (mean encoding), StandardScaler, MinMaxScaler
+        - **Training Data:** SAMOLET property portfolio, primarily Moscow region (113 locations)
         
-        The model was trained on Moscow apartment data with preprocessing including ordinal encoding, one-hot encoding, and feature scaling.
+        The model was trained on real estate data from SAMOLET's development sites with proper ML pipeline 
+        including fitted sklearn transformers for production deployment.
+        
+        **Note:** SAMOLET Group operates across multiple Russian regions. This specific model is optimized 
+        for properties in the Moscow area based on the training dataset coverage.
         """)
     
     return demo
