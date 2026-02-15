@@ -15,5 +15,8 @@ wheels/
 # Other files
 other/
 
+# Model file
+rf_tuned_model.joblib
+
 # Opencode files
 .opencode/
