@@ -20,3 +20,6 @@ rf_tuned_model.joblib
 
 # Opencode files
 .opencode/
+
+# Logs
+logs/

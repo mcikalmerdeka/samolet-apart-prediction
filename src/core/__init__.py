@@ -1,6 +1,7 @@
 """
-Utils package for data preprocessing, statistics, visualization, and ML utilities.
-The package is my own personal library for data analysis and machine learning projects.
+SAMOLET Apartment Price Prediction System - Core Module
+Contains data preprocessing, feature selection, statistics, visualization,
+and machine learning utilities for the price prediction pipeline.
 """
 
 # Core preprocessing functions (always available)

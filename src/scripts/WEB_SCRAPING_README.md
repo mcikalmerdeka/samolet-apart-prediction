@@ -407,7 +407,7 @@ This unified approach makes it easy to:
 - Check if API key is valid and has credits remaining
 
 ### Model prediction fails
-- Ensure model artifacts exist in `model_artifacts/`
+- Ensure model artifacts exist in `models/`
 - Run training pipeline if needed
 - Check feature names match between scraper and model
 
