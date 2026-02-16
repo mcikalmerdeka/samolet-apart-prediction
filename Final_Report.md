@@ -190,7 +190,26 @@ For each prediction, the Gradio interface provides:
    - While SAMOLET operates across multiple Russian regions, this specific model's training data appears concentrated in the Moscow area
    - Model would need retraining with regional data for accurate predictions in other SAMOLET development regions (e.g., other major Russian cities)
 
-6. **Link-Based Input Not Implemented**: The interface supports manual input and test dataset evaluation. Automatic feature extraction from apartment listing URLs (e.g., https://samolet.ru/project/...) is not implemented. This would require web scraping capabilities and is recommended as a future enhancement.
+6. **Link-Based Input Implementation Status**:
+   - The interface now includes a **"Link-Based Input"** tab documenting our web scraping attempts
+   - **Four different scraping approaches were tested**, all blocked by SAMOLET's anti-bot protection:
+     1. **web_scraper.py** (requests-based) - HTTP 403 Forbidden
+     2. **browser_scraper.py** (Playwright automation) - HTTP 403 Forbidden (browser fingerprint detected)
+     3. **crawl4ai_scraper.py** (Crawl4AI open-source) - HTTP 403 Forbidden with "Guru meditation" error (IP-based blocking)
+     4. **firecrawl_scraper.py** (cloud-based service) - Requires API key and credits; most likely to succeed but has usage costs
+   
+   **Why it doesn't work**: SAMOLET uses Cloudflare/CDN protection that detects and blocks automated access through:
+   - Browser fingerprinting detecting headless/automated browsers
+   - IP address blocking and rate limiting
+   - "Guru meditation" responses indicating CDN-level blocking
+   - Very slow page loading (2-3 minutes) designed to frustrate scrapers
+   
+   **Current Solution**: Users can use the "Manual Input" tab to enter apartment characteristics directly. The interface displays the example link from the case study (https://samolet.ru/project/oktyabrskaya-98/flats/308985/) as documentation.
+   
+   **Recommendation**: For production deployment, consider:
+   - Using FireCrawl API service (cloud-based bypass)
+   - Partnering with SAMOLET for API access
+   - Manual data entry workflow
 
 ---
 
@@ -254,13 +273,13 @@ def feature_encoding(
 **Training Phase** (notebook):
 
 - Fit all encoders on training data
-- Save fitted encoders to `feature_encoders.joblib`
-- Save scaling statistics to `scaling_stats.joblib`
-- Save valid categories to `categorical_values.joblib`
+- Save fitted encoders to `models/feature_encoders.joblib`
+- Save scaling statistics to `models/scaling_stats.joblib`
+- Save valid categories to `models/categorical_values.joblib`
 
 **Inference Phase** (main.py):
 
-- Load fitted encoders from artifacts
+- Load fitted encoders from `models/` directory
 - Apply same transformations using `feature_encoding(encoders=loaded_encoders)`
 - No refitting - ensures exact consistency with training
 
@@ -306,7 +325,21 @@ Output includes predicted price, price per m², and input summary.
 
 **Key Feature**: District selection allows users to see how location affects pricing predictions across SAMOLET's development portfolio.
 
-#### Tab 2: Test Data Evaluation
+#### Tab 2: Link-Based Input (Documented)
+
+This tab documents our web scraping implementation attempts for automatic feature extraction from apartment listing URLs.
+
+**Features**:
+
+- Displays the example link from the case study requirements: `https://samolet.ru/project/oktyabrskaya-98/flats/308985/`
+- Documents all four scraping approaches attempted (web_scraper.py, browser_scraper.py, crawl4ai_scraper.py, firecrawl_scraper.py)
+- Explains why each approach was blocked by SAMOLET's anti-bot protection
+- Provides clear guidance for users to use the Manual Input tab instead
+- Includes disabled URL input field and extraction button as placeholders for future implementation
+
+**Implementation Note**: While automatic extraction is not functional due to anti-bot protection, this tab serves as documentation of our comprehensive scraping attempts and provides transparency about the technical challenges encountered.
+
+#### Tab 3: Test Data Evaluation
 
 Users can browse through 2,965 test samples and compare model predictions against actual prices:
 
@@ -339,7 +372,7 @@ Users can browse through 2,965 test samples and compare model predictions agains
 
 ### Model Artifacts
 
-Located in `model_artifacts/`:
+Located in `models/`:
 
 - `rf_tuned_model.joblib` - Trained Random Forest model
 - `feature_names.joblib` - List of features used by the model
@@ -347,6 +380,7 @@ Located in `model_artifacts/`:
 - `encodings.joblib` - Legacy ordinal encoding mappings (for backward compatibility)
 - `scaling_stats.joblib` - Scaling statistics (min/max for MinMax scaler, mean/std for Standard scaler)
 - `categorical_values.joblib` - Valid category values for input validation (includes District list)
+- `scalers.joblib` - Fitted sklearn scalers for consistent feature scaling
 
 ### Test Data
 
@@ -363,15 +397,25 @@ Run `python main.py` to launch the Gradio interface and test predictions.
 
 ## 9. Future Improvements
 
-1. **Link-Based Input**: Implement web scraping to automatically extract features from apartment listing URLs
+1. **Link-Based Input Implementation**:
+   - **Current Status**: Four scraping approaches attempted but all blocked by anti-bot protection
+   - **Recommended Solution**: Implement FireCrawl API integration (cloud-based bypass) with proper API key management
+   - **Alternative**: Partner with SAMOLET for official API access to avoid scraping restrictions
+   - **Fallback**: Manual data entry workflow with copy-paste support from listing pages
+
 2. **Temporal Features**: Add date features to capture market trends and seasonal patterns
+
 3. **Enhanced Geographic Features**:
    - Add latitude/longitude coordinates for finer-grained location analysis
    - Implement proximity metrics (distance to metro, schools, parks)
    - Analyze micro-location effects within districts
+
 4. **SHAP Explanations**: Implement SHAP for detailed per-prediction interpretability
+
 5. **Model Monitoring**: Set up drift detection for production deployment
+
 6. **Ensemble Methods**: Explore stacking with other models (XGBoost, LightGBM) for potential performance gains
+
 7. **Feature Interaction**: Investigate interactions between District and other features (e.g., Class × District)
 
 ---
@@ -395,6 +439,8 @@ The Random Forest regression model successfully predicts apartment prices with *
 - Trained on 113 unique locations across SAMOLET's development portfolio
 
 The model is suitable for preliminary price estimation tasks within SAMOLET's development regions and can assist in property valuation decisions. The addition of District encoding significantly improved model performance while maintaining interpretability. The production-ready Gradio interface allows both manual prediction input and systematic evaluation on test data.
+
+**Web Scraping Implementation**: While the Link-Based Input feature from the case study requirements could not be fully implemented due to SAMOLET's anti-bot protection, comprehensive documentation of our scraping attempts is included in the interface. Four different approaches were tested (requests-based, Playwright, Crawl4AI, and FireCrawl cloud service), providing transparency about the technical challenges encountered. The interface includes a dedicated tab explaining these limitations and directing users to the Manual Input workflow.
 
 **Important Note**: While SAMOLET Group operates across multiple Russian regions, this specific model is trained on data primarily from the Moscow region and surrounding areas (based on the 113 districts in the training dataset). For deployment in other SAMOLET regions, the model would benefit from retraining with region-specific data to capture local market dynamics.
 
