@@ -23,53 +23,65 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 import warnings
+import logging
 
-# Import utils for applying encoders
-from utils import feature_encoding, feature_scaling
+# Setup application logger - this initializes handlers
+from src.config import setup_logger
+logger = setup_logger("samolet_price_predictor")
+
+# Import core modules for applying encoders
+from src.core import feature_encoding, feature_scaling
+from src.config import (
+    MODEL_PATH,
+    FEATURE_NAMES_PATH,
+    FEATURE_ENCODERS_PATH,
+    SCALING_STATS_PATH,
+    CATEGORICAL_VALUES_PATH,
+    TEST_DATA_PREPROCESSED_PATH,
+    TEST_DATA_RAW_PATH,
+    ORDINAL_CATEGORIES
+)
 
 # Import sklearn for unpickling
 from sklearn.ensemble import RandomForestRegressor
 
 warnings.filterwarnings('ignore')
 
-# Load the trained model and artifacts
-MODEL_PATH = Path('model_artifacts/rf_tuned_model.joblib')
-FEATURE_NAMES_PATH = Path('model_artifacts/feature_names.joblib')
-FEATURE_ENCODERS_PATH = Path('model_artifacts/feature_encoders.joblib')
-SCALING_STATS_PATH = Path('model_artifacts/scaling_stats.joblib')
-CATEGORICAL_VALUES_PATH = Path('model_artifacts/categorical_values.joblib')
-TEST_DATA_PREPROCESSED_PATH = Path('data/test_data_5%_preprocessed.csv')
-TEST_DATA_RAW_PATH = Path('data/test_data_5%_raw.csv')
-
 try:
+    logger.info("Loading model artifacts...")
     model = joblib.load(MODEL_PATH)
+    logger.info(f"Model loaded from {MODEL_PATH}")
+    
     feature_names = joblib.load(FEATURE_NAMES_PATH)
+    logger.info(f"Loaded {len(feature_names)} feature names")
+    
     feature_encoders = joblib.load(FEATURE_ENCODERS_PATH)
+    logger.debug(f"Feature encoders loaded: ordinal={len([k for k in feature_encoders.keys() if k.startswith('ordinal_')])}, onehot={len([k for k in feature_encoders.keys() if k.startswith('onehot_')])}")
+    
     scaling_stats = joblib.load(SCALING_STATS_PATH)
+    logger.info("Scaling statistics loaded")
+    
     categorical_values = joblib.load(CATEGORICAL_VALUES_PATH)
+    logger.info(f"Loaded {len(categorical_values['District'])} unique districts/locations")
     
     test_data_preprocessed = pd.read_csv(TEST_DATA_PREPROCESSED_PATH)
     test_data_raw = pd.read_csv(TEST_DATA_RAW_PATH)
+    logger.info(f"Test data loaded: {len(test_data_preprocessed)} samples")
     
+    logger.info("✅ All model artifacts loaded successfully")
+    logger.info("💼 Model trained on SAMOLET Group property portfolio (primarily Moscow region)")
+    
+    # Also print to console for user feedback
     print(f"✅ Model loaded successfully")
     print(f"✅ Expected features: {len(feature_names)} features")
-    print(f"✅ Feature encoders loaded:")
-    print(f"   - Ordinal: {[k for k in feature_encoders.keys() if k.startswith('ordinal_')]}")
-    print(f"   - OneHot: {[k for k in feature_encoders.keys() if k.startswith('onehot_')]}")
-    print(f"   - Mean: {'mean_encoder' in feature_encoders}")
     print(f"✅ Test data loaded: {len(test_data_preprocessed)} samples")
     print(f"✅ Available locations: {len(categorical_values['District'])} unique districts/locations")
     print(f"\n💼 Model trained on SAMOLET Group property portfolio")
     print(f"   (primarily Moscow region and surrounding areas)")
 except Exception as e:
+    logger.error(f"Failed to load model artifacts: {e}", exc_info=True)
     print(f"❌ Error loading model artifacts: {e}")
     raise
-
-# Ordinal categories (needed for encoding)
-ORDINAL_CATEGORIES = {
-    "Class": ["Эконом", "Комфорт", "Бизнес", "Элит"],
-    "Finishing": ["Нет данных", "Без отделки", "Подчистовая", "Чистовая", "С мебелью (частично)", "С мебелью"]
-}
 
 # Preprocessing function (matching notebook preprocessing)
 def preprocess_input(
@@ -216,7 +228,10 @@ def predict_price(
     """
     
     try:
+        logger.info(f"Starting prediction: {district}, {property_type}, {total_area}m²")
+        
         # Preprocess the input
+        logger.debug("Preprocessing input data...")
         processed_data = preprocess_input(
             total_area=total_area,
             floors_total=floors_total,
@@ -241,7 +256,9 @@ def predict_price(
         )
         
         # Make prediction
+        logger.debug("Making prediction with trained model...")
         prediction = model.predict(processed_data)[0]
+        logger.info(f"Prediction successful: {prediction:,.0f} ₽")
         
         # Format output
         prediction_millions = prediction / 1_000_000
@@ -266,6 +283,7 @@ def predict_price(
         return result
         
     except Exception as e:
+        logger.error(f"Prediction failed: {e}", exc_info=True)
         return f"❌ Error during prediction: {str(e)}\n\nDetails: {repr(e)}"
 
 
@@ -281,13 +299,16 @@ def predict_from_test_data(sample_index: int):
     """
     
     try:
+        logger.info(f"Evaluating test sample #{sample_index + 1}")
         sample_preprocessed = test_data_preprocessed.iloc[sample_index]
         sample_raw = test_data_raw.iloc[sample_index]
         
         X_sample = sample_preprocessed[feature_names].values.reshape(1, -1)
         actual_price = sample_preprocessed['TotalCost']
         
+        logger.debug(f"Sample features: District={sample_raw['District']}, Area={sample_raw['TotalArea']}m²")
         predicted_price = model.predict(X_sample)[0]
+        logger.info(f"Test prediction: predicted={predicted_price:,.0f} ₽, actual={actual_price:,.0f} ₽")
         
         error = predicted_price - actual_price
         error_percent = (error / actual_price) * 100
@@ -329,6 +350,7 @@ def predict_from_test_data(sample_index: int):
         return result
         
     except Exception as e:
+        logger.error(f"Test prediction failed for sample #{sample_index}: {e}", exc_info=True)
         return f"❌ Error during prediction: {str(e)}"
 
 
@@ -538,7 +560,75 @@ def create_gradio_interface():
                     outputs=output_manual
                 )
             
-            # Tab 2: Test Data Evaluation
+            # Tab 2: Link-Based Input
+            with gr.Tab("🔗 Link-Based Input"):
+                gr.Markdown("""
+                ### Web Scraping Feature (Coming Soon)
+                
+                This feature would allow you to provide a direct link to a SAMOLET property listing,
+                and the system would automatically extract apartment characteristics from the webpage.
+                
+                **Example Link:**
+                ```
+                https://samolet.ru/project/oktyabrskaya-98/flats/308985/
+                ```
+                
+                **Current Status:** 🔴 **Not Available**
+                
+                Due to SAMOLET's advanced anti-bot protection, automated web scraping is currently blocked:
+                
+                **What was tried:**
+                1. **web_scraper.py** - Basic requests-based scraper
+                   - Result: HTTP 403 Forbidden (blocked by anti-bot protection)
+                
+                2. **browser_scraper.py** - Playwright browser automation
+                   - Result: HTTP 403 Forbidden (browser fingerprint detected)
+                
+                3. **crawl4ai_scraper.py** - Open-source AI-powered crawling
+                   - Result: HTTP 403 Forbidden ("Access to samolet.ru is forbidden")
+                   - IP-based blocking detected
+                
+                4. **firecrawl_scraper.py** - Cloud-based scraping service
+                   - Requires API key and credits
+                   - More likely to succeed but has usage costs
+                
+                **Why it doesn't work:**
+                - SAMOLET uses Cloudflare/CDN protection that detects and blocks automated access
+                - Browser fingerprinting detects headless/automated browsers
+                - IP addresses get temporarily or permanently blocked
+                - 403 Forbidden errors with "Guru meditation" responses
+                
+                **Alternative:**
+                Please use the **"Manual Input"** tab to enter apartment characteristics directly.
+                The model can still provide accurate predictions with manual input of:
+                - Total Area
+                - District/Location
+                - Property Type (rooms)
+                - Class
+                - Building Type
+                - Finishing level
+                - Floor information
+                - Ceiling Height
+                """)
+                
+                with gr.Row():
+                    with gr.Column():
+                        gr.Textbox(
+                            label="Property URL (Disabled)",
+                            value="https://samolet.ru/project/...",
+                            interactive=False,
+                            info="🔗 Link-based extraction is currently unavailable due to anti-bot protection"
+                        )
+                        
+                    with gr.Column():
+                        gr.Button(
+                            "🚫 Extract Data from Link",
+                            variant="secondary",
+                            interactive=False,
+                            size="lg"
+                        )
+            
+            # Tab 3: Test Data Evaluation
             with gr.Tab("📊 Test Data Evaluation"):
                 gr.Markdown(f"""
                 ### Evaluate Model on Test Dataset
@@ -588,6 +678,13 @@ def create_gradio_interface():
 
 # Main execution
 if __name__ == "__main__":
+    logger.info("=" * 60)
+    logger.info("Starting SAMOLET Apartment Price Prediction Application")
+    logger.info("=" * 60)
+    logger.info(f"Server: 127.0.0.1:7860")
+    logger.info(f"Model: Random Forest Regressor (R² = 0.9787)")
+    logger.info("=" * 60)
+    
     demo = create_gradio_interface()
     demo.launch(
         share=False,
