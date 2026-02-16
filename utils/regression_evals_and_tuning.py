@@ -3,6 +3,7 @@
 from sklearn.metrics import (
     mean_absolute_error,
     mean_squared_error,
+    root_mean_squared_error,
     mean_absolute_percentage_error,
     r2_score,
     get_scorer
@@ -187,7 +188,7 @@ def eval_regression(
                 'train': metric_funcs[metric](y_train, y_pred_train)
             }
 
-        # Calculate RMSE manually (since it's not a direct scoring parameter in sklearn < 1.4)
+        # Calculate RMSE from CV MSE scores (scikit-learn 1.4+ has native root_mean_squared_error)
         # CV RMSE
         mse_test_scores = -cv_scores['test_mse']
         mse_train_scores = -cv_scores['train_mse']
@@ -201,10 +202,10 @@ def eval_regression(
             'train_std': rmse_train_scores.std()
         }
         
-        # Single run RMSE
+        # Single run RMSE using sklearn's native implementation
         metrics['rmse'] = {
-            'test': np.sqrt(metrics['mse']['test']),
-            'train': np.sqrt(metrics['mse']['train'])
+            'test': root_mean_squared_error(y_test, y_pred_test),
+            'train': root_mean_squared_error(y_train, y_pred_train)
         }
 
         # Add custom metrics if provided
@@ -244,6 +245,69 @@ def eval_regression(
     except Exception as e:
         print(f"Error during evaluation: {str(e)}")
         raise
+
+# Function to compare cross-validated metrics from multiple models
+def compare_cv_metrics(metrics_dict: dict) -> pd.DataFrame:
+    """
+    Compare cross-validated metrics from multiple models in a single table.
+    
+    This function extracts only the cross-validation metrics (not single-run metrics)
+    from multiple model evaluations and presents them in a comparison DataFrame.
+    
+    Parameters:
+    -----------
+    metrics_dict : dict
+        Dictionary with model names as keys and metrics dictionaries as values.
+        Format: {'model_name': metrics_dict_from_eval_regression}
+        
+    Returns:
+    --------
+    pd.DataFrame
+        DataFrame with models as rows and CV metrics as columns
+        
+    Example:
+    --------
+    >>> metrics_rf = eval_regression(model=rf, X_train=X_train, y_train=y_train, 
+    ...                              X_test=X_test, y_test=y_test)
+    >>> metrics_xgb = eval_regression(model=xgb, X_train=X_train, y_train=y_train,
+    ...                               X_test=X_test, y_test=y_test)
+    >>> comparison = compare_cv_metrics({
+    ...     'Random Forest': metrics_rf,
+    ...     'XGBoost': metrics_xgb
+    ... })
+    >>> display(comparison)
+    """
+    # Define metrics to extract from CV results
+    cv_metrics = ['mae', 'mse', 'rmse', 'mape', 'r2']
+    
+    # Prepare data for DataFrame
+    data = []
+    
+    for model_name, metrics in metrics_dict.items():
+        row = {'Model': model_name}
+        
+        # Extract CV metrics (test set only)
+        for metric in cv_metrics:
+            if 'cv' in metrics and metric in metrics['cv']:
+                mean_val = metrics['cv'][metric]['test_mean']
+                std_val = metrics['cv'][metric]['test_std']
+                
+                # Format based on metric type
+                if metric == 'mape':
+                    row[f'{metric.upper()}'] = f"{mean_val*100:.2f}% ± {std_val*100:.2f}%"
+                elif metric == 'r2':
+                    row[f'{metric.upper()}'] = f"{mean_val:.4f} ± {std_val:.4f}"
+                else:
+                    row[f'{metric.upper()}'] = f"{mean_val:.4f} ± {std_val:.4f}"
+            else:
+                row[f'{metric.upper()}'] = 'N/A'
+        
+        data.append(row)
+    
+    # Create DataFrame
+    df = pd.DataFrame(data)
+    
+    return df
 
 # ╔══════════════════════════════════════════════════════════════════════════════════╗
 # ║            Functions for Hyperparameter Tuning                                   ║

@@ -40,6 +40,7 @@ from .visualization import (
 # ML regression functions
 from .regression_evals_and_tuning import (
     eval_regression,
+    compare_cv_metrics,
     tune_pipelines,
     tune_single_model,
     tune_all_models,
@@ -78,6 +79,7 @@ __all__ = [
     
     # ML regression
     'eval_regression',
+    'compare_cv_metrics',
     'tune_pipelines',
     'tune_single_model',
     'tune_all_models',
