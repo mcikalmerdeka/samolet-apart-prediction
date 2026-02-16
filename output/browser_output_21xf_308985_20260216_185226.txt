@@ -1,0 +1,63 @@
+# Browser Scraper Output Report
+# Generated: 2026-02-16 18:52:26
+
+============================================================
+🌐 Browser Automation Scraper (Playwright)
+============================================================
+
+🔗 URL: https://samolet.ru/project/oktyabrskaya-98/flats/308985/
+📝 Hash: 21xf
+📅 Scraped: 2026-02-16T18:52:26.243387
+
+============================================================
+📊 EXTRACTED APARTMENT INFORMATION
+============================================================
+
+🏢 Project: Not found
+
+📐 AREA & LAYOUT:
+  • Total Area: Not found
+  • Area Without Balcony: Not found
+  • Living Area: Not found
+  • Kitchen Area: Not found
+  • Hallway Area: Not found
+
+🏠 PROPERTY DETAILS:
+  • Property Type: Not found
+  • Class: Not found
+  • Building Type: Not found
+  • Floor: Not found
+  • Total Floors: Not found
+  • Ceiling Height: Not found
+  • Finishing: Not found
+  • Phase: Not found
+
+📍 LOCATION:
+  • District: Not found
+
+💰 PRICE:
+  • Listed Price: Not found
+  • Price per m²: Not found
+
+💼 OTHER:
+  • Apartments: Not found
+  • Apartment Option: Not found
+  • Mortgage Available: Not found
+  • Subsidies Available: Not found
+  • Layout: Not found
+
+============================================================
+🔍 RAW HTML CONTENT (First 5000 chars)
+============================================================
+
+<!DOCTYPE html><html><head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel="icon" href="data:,">
+<meta name="referrer" content="no-referrer">
+<script src="/__qrator/qauth.js" charset="utf-8"></script>
+</head><body>
+</body></html>
+
+============================================================
+End of Report
+============================================================

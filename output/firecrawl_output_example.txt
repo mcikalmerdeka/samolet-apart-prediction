@@ -1,4 +1,4 @@
-(.venv) PS D:\Job Application\Application\SAMOLET> uv run firecrawl_scraper.py --url "https://samolet.ru/project/oktyabrskaya-98/flats/308985/" --extract --save-output
+(.venv) PS D:\Job Application\Application\SAMOLET> uv run .\scripts\firecrawl_scraper.py --url "https://samolet.ru/project/oktyabrskaya-98/flats/308985/" --extract --save-output
 ✅ Loaded .env file
 
 ============================================================
@@ -7,12 +7,7 @@
 ============================================================
 
 🤖 AI-powered extraction: https://samolet.ru/project/oktyabrskaya-98/flats/308985/
-  🌐 Calling FireCrawl with extraction...
-  ✅ Extracted in 31.39s
-  ✓ Extracted property_type: 3-комнатная
-  ✓ Extracted price: 45339452.0
-  ✓ Extracted project_name: ЖК «Октябрьская 98»
-  💾 Saved to: firecrawl_outputs\308985_38c661316326.json
+  💾 Using cached result (17.0h old)
 
 ============================================================
 📊 EXTRACTED APARTMENT INFORMATION

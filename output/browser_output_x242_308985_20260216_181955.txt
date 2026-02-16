@@ -1,0 +1,91 @@
+# Browser Scraper Output Report
+# Generated: 2026-02-16 18:19:55
+
+============================================================
+🌐 Browser Automation Scraper (Playwright)
+============================================================
+
+🔗 URL: https://samolet.ru/project/oktyabrskaya-98/flats/308985/
+📝 Hash: x242
+📅 Scraped: 2026-02-16T18:19:55.393604
+
+============================================================
+📊 EXTRACTED APARTMENT INFORMATION
+============================================================
+
+🏢 Project: Not found
+
+📐 AREA & LAYOUT:
+  • Total Area: Not found
+  • Area Without Balcony: Not found
+  • Living Area: Not found
+  • Kitchen Area: Not found
+  • Hallway Area: Not found
+
+🏠 PROPERTY DETAILS:
+  • Property Type: Not found
+  • Class: Not found
+  • Building Type: Not found
+  • Floor: Not found
+  • Total Floors: Not found
+  • Ceiling Height: Not found
+  • Finishing: Not found
+  • Phase: Not found
+
+📍 LOCATION:
+  • District: Not found
+
+💰 PRICE:
+  • Listed Price: Not found
+  • Price per m²: Not found
+
+💼 OTHER:
+  • Apartments: Not found
+  • Apartment Option: Not found
+  • Mortgage Available: Not found
+  • Subsidies Available: Not found
+  • Layout: Not found
+
+============================================================
+🔍 RAW HTML CONTENT (First 5000 chars)
+============================================================
+
+<!DOCTYPE html><html lang="ru"><head>
+    <meta charset="utf-8">
+    <title>HTTP 403</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        html {font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;}
+        body {background-color:#fff;padding:15px;}
+        div.title {font-size:32px;font-weight:bold;line-height:1.2em;}
+        div.sub-title {font-size:25px;}
+        div.descr {margin-top:40px;}
+        div.footer {margin-top:80px;color:#777;}
+        div.guru {font-size:12px;color:#ccc;}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="title">403 Error</div>
+        <div class="sub-title">Forbidden</div>
+
+        <div class="descr">
+            <p>Доступ к сайту samolet.ru запрещен.</p>
+            <p>Попробуйте зайти на samolet.ru позже, или обратитесь к администрации сайта.</p>
+        </div>
+
+        <div class="footer">
+            <div class="guru">
+                IP: 118.137.35.176<br>
+                Request: GET L3FyZXJyb3IvNDAzLmh0bWw=<br>
+                Guru meditation: R0dQRWc3WWlHT3BKdEE4NldoUGZ5VjJnaGhTMDk1OTM=<br>
+            </div>
+        </div>
+    </div>
+
+
+</body></html>
+
+============================================================
+End of Report
+============================================================
