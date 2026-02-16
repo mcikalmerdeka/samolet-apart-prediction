@@ -56,7 +56,7 @@ python firecrawl_scraper.py --batch urls.txt
 ```
 
 **Output Files:**
-All outputs are saved to `firecrawl_outputs/` folder:
+All outputs are saved to `output/` folder:
 - `--save`: Saves structured JSON results (`firecrawl_{flat_id}_{timestamp}.json`)
 - `--save-output`: Saves formatted report with extracted data + raw content (`firecrawl_output_{hash}_{flat_id}_{timestamp}.txt`)
 
@@ -92,7 +92,7 @@ python firecrawl_predict.py --url "..." --no-cache
 ```
 
 **Output:**
-All outputs are saved to `firecrawl_outputs/` folder:
+All outputs are saved to `output/` folder:
 - Scraped apartment details
 - Predicted price vs listed price
 - Price difference analysis
@@ -132,7 +132,7 @@ python scripts/browser_scraper.py --url "..." --save-output
 ```
 
 **Output Files:**
-All outputs are saved to `firecrawl_outputs/` folder:
+All outputs are saved to `output/` folder:
 - `--save`: Saves structured JSON results (`apartment_browser_{flat_id}_{timestamp}.json`)
 - `--save-output`: Saves formatted report with extracted data + raw HTML (`browser_output_{hash}_{flat_id}_{timestamp}.txt`)
 
@@ -173,7 +173,7 @@ python scripts/web_scraper.py --url "..." --save-output
 ```
 
 **Output Files:**
-All outputs are saved to `firecrawl_outputs/` folder:
+All outputs are saved to `output/` folder:
 - `--save`: Saves structured JSON results (`apartment_{flat_id}_{timestamp}.json`)
 - `--save-output`: Saves formatted report with extracted data + raw HTML (`webscraper_output_{hash}_{flat_id}_{timestamp}.txt`)
 
@@ -313,7 +313,7 @@ python firecrawl_predict.py --url "..." --save-output
 python firecrawl_predict.py --url "..." --save --save-output
 ```
 
-**Output Location:** All results saved to `firecrawl_outputs/` folder
+**Output Location:** All results saved to `output/` folder
 
 ---
 
@@ -360,11 +360,11 @@ with gr.Tab("🔗 URL Input"):
 
 ## 📁 Unified Output System
 
-All scraping scripts now use a **single unified output folder** (`firecrawl_outputs/`) for consistency:
+All scraping scripts now use a **single unified output folder** (`output/`) for consistency:
 
 ### Output Structure:
 ```
-firecrawl_outputs/
+output/
 ├── firecrawl_{flat_id}_{timestamp}.json              # FireCrawl JSON results
 ├── firecrawl_output_{hash}_{flat_id}_{timestamp}.txt # FireCrawl formatted report
 ├── prediction_{flat_id}_{timestamp}.json             # Prediction results
@@ -484,6 +484,6 @@ python scripts/browser_scraper.py --url "..." --headless --save-output
 python scripts/web_scraper.py --url "..." --save-output
 ```
 
-All outputs saved to `firecrawl_outputs/` folder for easy review!
+All outputs saved to `output/` folder for easy review!
 
 Happy scraping! 🏠🔥

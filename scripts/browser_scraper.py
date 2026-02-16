@@ -11,11 +11,19 @@ Usage:
     python browser_scraper.py --url "https://samolet.ru/project/oktyabrskaya-98/flats/308985/"
     python browser_scraper.py --save --headless
 
+Note: SAMOLET website may have advanced anti-bot protection that can result in:
+- 403 Forbidden errors (Access blocked)
+- 401 Unauthorized errors
+- IP-based blocking
+- Browser fingerprint detection
+
 This approach is more likely to succeed than requests-based scraping because:
 1. Uses real browser engine (Chromium)
 2. Executes JavaScript like a real user
 3. Handles cookies and session storage
 4. Mimics human behavior patterns
+
+If scraping fails due to 403 errors, the script will provide guidance on manual data input.
 """
 
 import asyncio
@@ -190,6 +198,14 @@ class BrowserScraper:
                 
                 if response:
                     print(f"  ✅ Page loaded (Status: {response.status})")
+                    
+                    # Check for error status codes
+                    if response.status >= 400:
+                        print(f"  ⚠️  HTTP {response.status} Error - Access blocked or forbidden")
+                        error_content = await page.content()
+                        await context.close()
+                        await browser.close()
+                        return error_content, {"error": True, "status": response.status}
                 
                 # Wait for content to load
                 await asyncio.sleep(self.delay)
@@ -521,7 +537,40 @@ class BrowserScraper:
         
         if html is None:
             print(f"\n❌ Failed to fetch page")
+            print(f"\nPossible reasons:")
+            print(f"  • Website requires authentication")
+            print(f"  • Anti-bot protection is active")
+            print(f"  • Site blocks requests from this IP")
+            print(f"\nRecommendations:")
+            print(f"  1. Try using a different network or VPN")
+            print(f"  2. Check if there's a public API")
+            print(f"  3. Consider manual data entry mode")
             return None
+        
+        # Check if we got an error response (403 Forbidden, etc.)
+        if js_data and js_data.get("error"):
+            status = js_data.get("status", 403)
+            print(f"\n❌ Failed to access website (HTTP {status})")
+            print(f"\nPossible reasons:")
+            if status == 403:
+                print(f"  • Access to the website is forbidden (403 Forbidden)")
+                print(f"  • The site has detected and blocked automated browser access")
+                print(f"  • Your IP address may be restricted")
+            elif status == 401:
+                print(f"  • Website requires authentication (401 Unauthorized)")
+            else:
+                print(f"  • Server returned error code: {status}")
+            print(f"  • Advanced anti-bot protection is active")
+            print(f"\nRecommendations:")
+            print(f"  1. Try using a VPN or different network connection")
+            print(f"  2. Wait a few minutes and try again (rate limiting)")
+            print(f"  3. Use manual data input mode instead")
+            print(f"  4. Check if the website is accessible in a regular browser")
+            
+            # Still return data with the error HTML so it can be saved for review
+            data = self.parse_content(html, url, None)
+            data.raw_content = html
+            return data
         
         data = self.parse_content(html, url, js_data)
         
@@ -531,7 +580,7 @@ class BrowserScraper:
         
         return data
     
-    def save_results(self, data: ApartmentData, output_dir: str = "firecrawl_outputs"):
+    def save_results(self, data: ApartmentData, output_dir: str = "output"):
         """Save scraped data to JSON file in unified output folder"""
         output_path = Path(output_dir)
         output_path.mkdir(exist_ok=True)
@@ -556,7 +605,7 @@ def generate_random_hash(length: int = 4) -> str:
     return ''.join(random.choices(string.ascii_lowercase + string.digits, k=length))
 
 
-def save_raw_output(url: str, data: ApartmentData, html_content: str, output_dir: str = "firecrawl_outputs"):
+def save_raw_output(url: str, data: ApartmentData, html_content: str, output_dir: str = "output"):
     """
     Save complete scraper output to text file for review
     
@@ -564,7 +613,7 @@ def save_raw_output(url: str, data: ApartmentData, html_content: str, output_dir
         url: Source URL
         data: Extracted ApartmentData
         html_content: Raw HTML content
-        output_dir: Directory to save output files (default: firecrawl_outputs)
+        output_dir: Directory to save output files (default: output)
     """
     import datetime
     output_path = Path(output_dir)
@@ -737,9 +786,9 @@ Note: First run requires installing Playwright browsers:
     parser.add_argument('--headless', action='store_true',
                         help='Run browser in headless mode (no visible window)')
     parser.add_argument('--save', action='store_true',
-                        help='Save results to JSON file in firecrawl_outputs/')
+                        help='Save results to JSON file in output/')
     parser.add_argument('--save-output', action='store_true',
-                        help='Save formatted output to .txt file in firecrawl_outputs/')
+                        help='Save formatted output to .txt file in output/')
     parser.add_argument('--delay', type=float, default=2.0,
                         help='Delay between actions (seconds)')
     
@@ -772,11 +821,28 @@ Note: First run requires installing Playwright browsers:
         print("  3. Missing fields can be filled manually or with defaults")
     else:
         print("\n❌ Scraping failed")
-        print("\nPossible solutions:")
-        print("  • Try running with --headless for faster execution")
+        print("\n" + "="*60)
+        print("📝 MANUAL INPUT MODE")
+        print("="*60)
+        print("Since the website blocks automated browser access (403 Forbidden), you can:")
+        print("  1. Visit the URL manually in your browser:")
+        print(f"     {args.url}")
+        print("  2. Extract the visible apartment details from the page")
+        print("  3. Input them into the main.py prediction interface")
+        print("\nRequired fields for prediction:")
+        print("  - Total Area (m²)")
+        print("  - District / Location")
+        print("  - Property Type (rooms)")
+        print("  - Class (Эконом/Комфорт/Бизнес/Элит)")
+        print("  - Building Type")
+        print("  - Finishing level")
+        print("  - Floor / Total Floors")
+        print("  - Ceiling Height")
+        print("\nAlternative approaches:")
+        print("  • Try using a VPN or different network connection")
+        print("  • Wait a few minutes and try again (rate limiting)")
         print("  • Check if the URL is accessible in a regular browser")
-        print("  • The site may have advanced anti-bot protection")
-        print("  • Consider using manual data input mode")
+        print("  • Contact the website administrator if access is needed")
 
 
 def main():

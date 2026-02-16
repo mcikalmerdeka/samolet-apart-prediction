@@ -100,13 +100,13 @@ class ApartmentData:
 class FireCrawlScraper:
     """FireCrawl-based scraper for SAMOLET website"""
     
-    def __init__(self, api_key: Optional[str] = None, output_dir: str = "firecrawl_outputs", save_output: bool = False):
+    def __init__(self, api_key: Optional[str] = None, output_dir: str = "output", save_output: bool = False):
         """
         Initialize FireCrawl scraper
         
         Args:
             api_key: FireCrawl API key (or from FIRECRAWL_API_KEY env var)
-            output_dir: Directory to save scraped results (default: firecrawl_outputs)
+            output_dir: Directory to save scraped results (default: output)
             save_output: Whether to save raw output to file
         """
         self.api_key = api_key or os.getenv('FIRECRAWL_API_KEY')
@@ -319,6 +319,13 @@ class FireCrawlScraper:
             # Parse extracted data
             data = self._parse_extracted_data(url, result)
             
+            # Save complete output for review (if enabled)
+            if self.save_output:
+                print(f"  💾 Saving output ({len(data.raw_content) if data.raw_content else 0} chars)...")
+                save_raw_output(url, data, data.raw_content or "", output_dir=str(self.output_dir))
+            else:
+                print(f"  ℹ️  Output saving disabled (use --save-output to enable)")
+            
             # Cache and return
             if use_cache:
                 self._save_to_cache(data)
@@ -442,6 +449,12 @@ class FireCrawlScraper:
         extracted_count = sum(1 for attr in field_mapping.keys() 
                             if getattr(data, attr) is not None)
         data.extraction_confidence = extracted_count / len(field_mapping)
+        
+        # Store raw extraction result for output saving
+        try:
+            data.raw_content = json.dumps(extracted, ensure_ascii=False, indent=2)
+        except:
+            data.raw_content = str(result)
         
         return data
     
@@ -723,7 +736,7 @@ def save_results(data: ApartmentData, output_dir: str = "scraped_data"):
     return filepath
 
 
-def save_raw_output(url: str, data: ApartmentData, raw_content: str, output_dir: str = "firecrawl_outputs") -> Path:
+def save_raw_output(url: str, data: ApartmentData, raw_content: str, output_dir: str = "output") -> Path:
     """
     Save complete scraper output to text file for review (includes both formatted results and raw content)
     
@@ -731,7 +744,7 @@ def save_raw_output(url: str, data: ApartmentData, raw_content: str, output_dir:
         url: Source URL
         data: Extracted ApartmentData
         raw_content: Raw content from FireCrawl (markdown or HTML)
-        output_dir: Directory to save output files
+        output_dir: Directory to save output files (default: output)
         
     Returns:
         Path to saved file

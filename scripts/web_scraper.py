@@ -454,7 +454,7 @@ class SamoletWebScraper:
         data = self.extract_apartment_data(soup, url)
         return data
     
-    def save_results(self, data: ApartmentData, output_dir: str = "firecrawl_outputs"):
+    def save_results(self, data: ApartmentData, output_dir: str = "output"):
         """Save scraped data to JSON file in unified output folder"""
         output_path = Path(output_dir)
         output_path.mkdir(exist_ok=True)
@@ -480,7 +480,7 @@ def generate_random_hash(length: int = 4) -> str:
     return ''.join(random.choices(string.ascii_lowercase + string.digits, k=length))
 
 
-def save_raw_output(url: str, data: ApartmentData, html_content: str, output_dir: str = "firecrawl_outputs"):
+def save_raw_output(url: str, data: ApartmentData, html_content: str, output_dir: str = "output"):
     """
     Save complete scraper output to text file for review (includes both formatted results and raw HTML)
     
@@ -488,7 +488,7 @@ def save_raw_output(url: str, data: ApartmentData, html_content: str, output_dir
         url: Source URL
         data: Extracted ApartmentData
         html_content: Raw HTML content
-        output_dir: Directory to save output files (default: firecrawl_outputs)
+        output_dir: Directory to save output files (default: output)
     """
     import datetime
     output_path = Path(output_dir)
@@ -691,9 +691,9 @@ Examples:
     parser.add_argument('--test-connection', action='store_true',
                         help='Test connectivity to the website')
     parser.add_argument('--save', action='store_true',
-                        help='Save results to JSON file in firecrawl_outputs/')
+                        help='Save results to JSON file in output/')
     parser.add_argument('--save-output', action='store_true',
-                        help='Save formatted output to .txt file in firecrawl_outputs/')
+                        help='Save formatted output to .txt file in output/')
     parser.add_argument('--delay', type=float, default=1.0,
                         help='Delay between requests (seconds)')
     
