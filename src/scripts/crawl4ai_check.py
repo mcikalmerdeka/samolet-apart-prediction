@@ -1,10 +1,19 @@
+"""
+Simple script to check if the Crawl4AI is working.
+"""
+
 import asyncio
 from crawl4ai import *
 
 async def main():
     async with AsyncWebCrawler() as crawler:
         result = await crawler.arun(
-            url="https://karpathy.github.io/neuralnets/",
+
+            # Testing for random url
+            url="https://karpathy.github.io/neuralnets/"
+            
+            # # The url is the url of the apartment that we want to scrape.
+            # url="https://samolet.ru/project/novograd-pavlino/flats/455363/"
         )
         print(result.markdown)
 
