@@ -9,12 +9,6 @@ Operations: Full-cycle development across multiple Russian regions
 
 Dataset Context: Model trained on SAMOLET's property portfolio, primarily concentrated in 
 Moscow region and surrounding areas (113 unique districts/locations).
-
-Key improvements:
-- Uses fitted sklearn encoders (OrdinalEncoder, OneHotEncoder, TargetEncoder)
-- Includes District feature with mean encoding for geographical price variation
-- Proper handling of unknown categories
-- Consistent preprocessing with training pipeline
 """
 
 import gradio as gr
@@ -35,6 +29,7 @@ from src.config import (
     MODEL_PATH,
     FEATURE_NAMES_PATH,
     FEATURE_ENCODERS_PATH,
+    SCALERS_PATH,
     SCALING_STATS_PATH,
     CATEGORICAL_VALUES_PATH,
     TEST_DATA_PREPROCESSED_PATH,
@@ -58,8 +53,11 @@ try:
     feature_encoders = joblib.load(FEATURE_ENCODERS_PATH)
     logger.debug(f"Feature encoders loaded: ordinal={len([k for k in feature_encoders.keys() if k.startswith('ordinal_')])}, onehot={len([k for k in feature_encoders.keys() if k.startswith('onehot_')])}")
     
+    scalers = joblib.load(SCALERS_PATH)
+    logger.info(f"Sklearn scalers loaded: {list(scalers.keys())}")
+    
     scaling_stats = joblib.load(SCALING_STATS_PATH)
-    logger.info("Scaling statistics loaded")
+    logger.info("Scaling statistics loaded (backup)")
     
     categorical_values = joblib.load(CATEGORICAL_VALUES_PATH)
     logger.info(f"Loaded {len(categorical_values['District'])} unique districts/locations")
@@ -163,37 +161,22 @@ def preprocess_input(
     # Keep only the features in the correct order
     input_encoded = input_encoded[feature_names]
     
-    # 3. Feature Scaling using training statistics
-    scaling_config = {
-        "minmax": {
-            "columns": ["Class", "Phase", "Finishing"]
-        },
-        "standard": {
-            "columns": ["TotalArea", "CeilingHeight", "FloorsTotal", "District"]
-        }
-    }
-    
-    # Create a scaler dict from scaling_stats (mimic the format expected by feature_scaling)
-    # Note: We're manually applying scaling here for simplicity
-    # Alternatively, we could have saved the sklearn scaler objects
-    
+    # 3. Feature Scaling using fitted sklearn scalers
     input_scaled = input_encoded.copy()
     
     # Apply MinMax scaling
-    for col in scaling_config['minmax']['columns']:
-        if col in input_scaled.columns and col in scaling_stats['minmax']:
-            min_val = scaling_stats['minmax'][col]['min']
-            max_val = scaling_stats['minmax'][col]['max']
-            if max_val > min_val:
-                input_scaled[col] = (input_scaled[col] - min_val) / (max_val - min_val)
+    if 'minmax' in scalers:
+        minmax_cols = scalers['minmax'].feature_names_in_
+        cols_to_scale = [col for col in minmax_cols if col in input_scaled.columns]
+        if cols_to_scale:
+            input_scaled[cols_to_scale] = scalers['minmax'].transform(input_scaled[cols_to_scale])
     
     # Apply Standard scaling
-    for col in scaling_config['standard']['columns']:
-        if col in input_scaled.columns and col in scaling_stats['standard']:
-            mean_val = scaling_stats['standard'][col]['mean']
-            std_val = scaling_stats['standard'][col]['std']
-            if std_val > 0:
-                input_scaled[col] = (input_scaled[col] - mean_val) / std_val
+    if 'standard' in scalers:
+        standard_cols = scalers['standard'].feature_names_in_
+        cols_to_scale = [col for col in standard_cols if col in input_scaled.columns]
+        if cols_to_scale:
+            input_scaled[cols_to_scale] = scalers['standard'].transform(input_scaled[cols_to_scale])
     
     return input_scaled
 
@@ -386,11 +369,6 @@ def create_gradio_interface():
         
         **Model Coverage**: Trained on SAMOLET's property portfolio, primarily from Moscow region 
         and surrounding areas (113 unique locations in dataset).
-        
-        **NEW Features:** 
-        - District/Location feature with mean encoding for geographical price prediction
-        - Production-ready sklearn pipeline ensures consistent preprocessing
-        
         ---
         """)
         
@@ -655,22 +633,15 @@ def create_gradio_interface():
                     inputs=[sample_slider],
                     outputs=output_test
                 )
-        
         gr.Markdown("""
         ---
         ### ℹ️ Model Information
         
         - **Client:** SAMOLET Group (ПАО «ГК «Самолет») - Russia's leading residential developer
-        - **Model:** Random Forest Regressor (Tuned) - R² = 0.9787
+        - **Model:** Random Forest Regressor (Tuned) - R² = 0.9786
         - **Features Used:** TotalArea, Class, CeilingHeight, FloorsTotal, Phase, Finishing, District (mean-encoded), PropertyType (one-hot)
         - **Preprocessing:** sklearn OrdinalEncoder, OneHotEncoder, TargetEncoder (mean encoding), StandardScaler, MinMaxScaler
         - **Training Data:** SAMOLET property portfolio, primarily Moscow region (113 locations)
-        
-        The model was trained on real estate data from SAMOLET's development sites with proper ML pipeline 
-        including fitted sklearn transformers for production deployment.
-        
-        **Note:** SAMOLET Group operates across multiple Russian regions. This specific model is optimized 
-        for properties in the Moscow area based on the training dataset coverage.
         """)
     
     return demo
@@ -682,7 +653,7 @@ if __name__ == "__main__":
     logger.info("Starting SAMOLET Apartment Price Prediction Application")
     logger.info("=" * 60)
     logger.info(f"Server: 127.0.0.1:7860")
-    logger.info(f"Model: Random Forest Regressor (R² = 0.9787)")
+    logger.info(f"Model: Random Forest Regressor (R² = 0.9786)")
     logger.info("=" * 60)
     
     demo = create_gradio_interface()

@@ -18,6 +18,7 @@ SCRIPTS_DIR = PROJECT_ROOT / "scripts"
 MODEL_PATH = MODELS_DIR / "rf_tuned_model.joblib"
 FEATURE_NAMES_PATH = MODELS_DIR / "feature_names.joblib"
 FEATURE_ENCODERS_PATH = MODELS_DIR / "feature_encoders.joblib"
+SCALERS_PATH = MODELS_DIR / "scalers.joblib"
 SCALING_STATS_PATH = MODELS_DIR / "scaling_stats.joblib"
 CATEGORICAL_VALUES_PATH = MODELS_DIR / "categorical_values.joblib"
 
@@ -62,6 +63,6 @@ DEFAULT_FINISHING = "Чистовая"
 # Model metadata
 MODEL_VERSION = "2.0"
 MODEL_TYPE = "Random Forest Regressor"
-MODEL_R2_SCORE = 0.9787
+MODEL_R2_SCORE = 0.9786
 COMPANY_NAME = "SAMOLET Group"
 COMPANY_TICKER = "SMLT"
