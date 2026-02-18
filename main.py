@@ -557,10 +557,10 @@ def create_gradio_interface():
                 
                 **What was tried:**
                 1. **web_scraper.py** - Basic requests-based scraper
-                   - Result: HTTP 403 Forbidden (blocked by anti-bot protection)
+                   - Result: HTTP 401 Unauthorized (authentication required / blocked by anti-bot protection)
                 
                 2. **browser_scraper.py** - Playwright browser automation
-                   - Result: HTTP 403 Forbidden (browser fingerprint detected)
+                   - Result: HTTP 401 Unauthorized (authentication required / blocked by anti-bot protection)
                 
                 3. **crawl4ai_scraper.py** - Open-source AI-powered crawling
                    - Result: HTTP 403 Forbidden ("Access to samolet.ru is forbidden")
