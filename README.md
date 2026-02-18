@@ -52,13 +52,12 @@ Machine learning model for predicting apartment prices based on layout character
 │   ├── test_data_5%_preprocessed.csv
 │   └── test_data_5%_raw.csv
 │
-├── output/                      # Plots (e.g. feature importance)
+├── output/                      # Plots and web scraping outputs(e.g. feature importance)
 │   ├── gini_importance.png
-│   └── permutation_importance.png
-│
-└── other/                       # Archive/older versions
-    ├── main_v1.py
-    └── notebook_v1.ipynb
+│   ├── permutation_importance.png
+│   ├── firecrawl_output_{hash}_{flat_id}_{timestamp}.txt
+│   ├── browser_output_{hash}_{flat_id}_{timestamp}.txt
+│   ├── webscraper_output_{hash}_{flat_id}_{timestamp}.txt
 ```
 
 ## 🚀 Quick Start
