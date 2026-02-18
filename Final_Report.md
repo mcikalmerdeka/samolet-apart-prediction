@@ -119,11 +119,11 @@ The selected metrics directly address critical real estate valuation requirement
 
 - **Real Estate Relevance**: Real estate prices are driven by multiple correlated factors (location, size, quality). R² = 0.9786 means the model captures 97.86% of price variation, indicating it successfully models the complex interplay of apartment characteristics.
 - **Business Impact**: High R² gives confidence that the model understands market dynamics rather than memorizing training data. For SAMOLET, this means reliable pricing across their portfolio.
-- **Industry Benchmark**: Real estate models typically achieve R² of 0.75-0.85; our 0.9786 exceeds industry standards, likely due to controlled dataset (single developer, consistent construction standards in the apartment listed in the dataset).
+- **Industry Benchmark**: Real estate models typically achieve R² of 0.75-0.85; our 0.9786 exceeds industry standards, likely due to controlled dataset (single developer, consistent construction standards).
 
 **2. RMSE (1.75M ₽) - Mispricing Risk**
 
-- **Real Estate Relevance**: RMSE penalizes large errors quadratically, critical in real estate where significant mispricing has severe consequences (lost revenue if underpriced, unsold inventory if overpriced).
+- **Real Estate Relevance**: RMSE penalizes large errors quadratically, critical in real estate where significant mispricing has severe consequences (lost revenue if underpriced, unsold properties if overpriced).
 - **Business Impact**: ~1.75M ₽ error on 20-25M ₽ apartments (7-8%) is within acceptable tolerance for preliminary pricing. For SAMOLET's portfolio pricing, this prevents catastrophic mispricing while allowing for final human adjustment.
 - **Risk Assessment**: The model's low RMSE means it rarely makes extreme errors that would damage buyer trust or developer profitability.
 
@@ -131,17 +131,17 @@ The selected metrics directly address critical real estate valuation requirement
 
 - **Real Estate Relevance**: MAE represents typical prediction error, directly interpretable for business stakeholders. 884K ₽ (~3-4% error) aligns with typical negotiation margins in real estate transactions.
 - **Business Impact**: Buyers typically negotiate 3-5% off listing prices; our MAE falls within this range, making predictions suitable for initial listing price recommendations.
-- **Operational Use**: Low MAE enables automated preliminary pricing for new inventory, reducing manual appraisal workload for SAMOLET's pricing team.
+- **Operational Use**: Low MAE enables automated preliminary pricing for new properties, reducing manual appraisal workload for SAMOLET's pricing team.
 
 **4. Cross-Validation Stability (±0.0012 std on R²)**
 
 - **Real Estate Relevance**: Real estate markets have spatial heterogeneity (different neighborhoods behave differently). Low CV variance indicates the model generalizes across SAMOLET's diverse development sites.
-- **Business Impact**: Consistent performance across CV folds means the model works reliably for apartments in different districts, construction phases, and property classes—critical for a developer operating across 113 locations.
+- **Business Impact**: Consistent performance across CV folds means the model works reliably for apartments in different districts, construction phases, and property classes which is critical for a developer operating across 113 locations.
 
 **Domain-Specific Validation**:
 
-- **Train-Test Gap** (0.9966 vs 0.9786): Small gap indicates the model hasn't overfit to specific properties, crucial since real estate inventory constantly changes with new developments.
-- **Outlier Handling**: IQR-based outlier removal protects against extreme luxury properties that don't represent SAMOLET's core market, ensuring predictions remain relevant for their typical inventory (economy to business class apartments).
+- **Train-Test Gap** (0.9966 vs 0.9786): Small gap indicates the model hasn't overfit to specific properties, crucial since real estate portfolios constantly change with new developments.
+- **Outlier Handling**: IQR-based outlier removal protects against extreme luxury properties that don't represent SAMOLET's core market, ensuring predictions remain relevant for their typical portfolio (economy to business class apartments).
 
 ---
 
@@ -274,7 +274,7 @@ Browse 2,965 test samples with predicted vs actual price comparison, error metri
 
 ### Model Artifacts
 
-Located in `models/`: trained model, feature encoders (Ordinal/OneHot/Target), scalers, feature names, categorical values
+Located in `models/`: trained model, feature encoders (Ordinal/OneHot/Target), scalers, feature names, categorical values. These are loaded for using in the main.py script.
 
 ### Test Data
 
@@ -286,25 +286,3 @@ Located in `data/`:
 ### Example Predictions
 
 Run `python main.py` or use `uv run main.py` to launch the Gradio interface and test predictions.
-
----
-
-## Conclusion
-
-The Random Forest regression model achieves **excellent accuracy (R² = 0.9786, RMSE = 1.75M ₽)**, explaining 97.86% of price variance with ~7-8% average error. The model balances predictive performance with interpretability through feature importance analysis.
-
-**Key Strengths**:
-
-1. Production-ready sklearn pipeline ensuring training-inference consistency
-2. Proper handling of high-cardinality features (District mean encoding with cross-validation)
-3. Rigorous validation preventing data leakage
-4. Minimal overfitting (train R² = 0.9966 vs test R² = 0.9786)
-
-**Deployment Considerations**:
-
-- Model trained on Moscow region data (113 districts); suitable for SAMOLET's Moscow portfolio
-- Link-based input documented but non-functional due to anti-bot protection (4 approaches tested)
-- Should be used with professional appraisal for high-stakes decisions
-- Requires retraining for other SAMOLET development regions
-
-The Gradio interface provides manual input and test data evaluation capabilities, making the model accessible for preliminary price estimation tasks.
