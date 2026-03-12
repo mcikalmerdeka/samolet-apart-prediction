@@ -23,3 +23,6 @@ rf_tuned_model.joblib
 
 # Logs
 logs/
+
+# Reports
+report/
