@@ -14,6 +14,8 @@ pinned: false
 
 Machine learning model for predicting apartment prices based on layout characteristics and property attributes for **SAMOLET Group** (ПАО «ГК «Самолет»), one of Russia's largest residential real estate developers (MOEX: SMLT).
 
+Try the app on [Hugging Face Space](https://huggingface.co/spaces/mcikalmerdeka/samolet-apart-prediction)
+
 ## 🎯 Model Performance
 
 - **R² Score**: 0.9786 (97.86% variance explained, 5-fold CV)
