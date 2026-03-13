@@ -584,14 +584,14 @@ if __name__ == "__main__":
     logger.info("=" * 60)
     logger.info("Starting SAMOLET Apartment Price Prediction Application")
     logger.info("=" * 60)
-    logger.info(f"Server: 127.0.0.1:7860")
+    logger.info(f"Server: 0.0.0.0:7860")
     logger.info(f"Model: Random Forest Regressor (R² = 0.9786)")
     logger.info("=" * 60)
     
     demo = create_gradio_interface()
     demo.launch(
         share=False,
-        server_name="127.0.0.1",
+        server_name="0.0.0.0",
         server_port=7860,
         show_error=True
     )
