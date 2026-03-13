@@ -1,3 +1,15 @@
+---
+title: SAMOLET Apartment Price Prediction
+emoji: 🏠
+colorFrom: blue
+colorTo: yellow
+sdk: gradio
+sdk_version: "6.5.1"
+python_version: "3.12"
+app_file: main.py
+pinned: false
+---
+
 # SAMOLET Apartment Price Prediction System
 
 Machine learning model for predicting apartment prices based on layout characteristics and property attributes for **SAMOLET Group** (ПАО «ГК «Самолет»), one of Russia's largest residential real estate developers (MOEX: SMLT).
