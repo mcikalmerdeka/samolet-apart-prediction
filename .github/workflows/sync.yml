@@ -1,0 +1,58 @@
+name: Sync to Hugging Face Hub
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  sync-to-hub:
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: true
+
+      - name: Pull LFS objects
+        run: git lfs pull
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install huggingface_hub with Xet support
+        run: pip install huggingface_hub hf_xet
+
+      - name: Upload to Hugging Face Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          python - <<'EOF'
+          import os
+          from huggingface_hub import HfApi
+
+          api = HfApi()
+          api.upload_folder(
+              folder_path=".",
+              repo_id="mcikalmerdeka/samolet-apart-prediction",
+              repo_type="space",
+              token=os.environ["HF_TOKEN"],
+              ignore_patterns=[
+                  ".git/*",
+                  ".gitignore",
+                  ".gitattributes",
+                  ".github/*",
+                  ".venv/*",
+                  "__pycache__/*",
+                  "*.py[oc]",
+                  ".env",
+                  "output/*",
+                  "models/*.pt",
+              ],
+          )
+          print("Successfully synced to Hugging Face Space.")
+          EOF
