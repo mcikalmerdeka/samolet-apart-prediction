@@ -27,31 +27,68 @@ jobs:
       - name: Install huggingface_hub with Xet support
         run: pip install huggingface_hub hf_xet
 
-      - name: Upload to Hugging Face Space
+      - name: Clear existing files and Upload to Hugging Face Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           python - <<'EOF'
           import os
-          from huggingface_hub import HfApi
+          from huggingface_hub import HfApi, list_repo_files, delete_files
 
           api = HfApi()
+          repo_id = "mcikalmerdeka/samolet-apart-prediction"
+          token = os.environ["HF_TOKEN"]
+
+          # Step 1: Delete all existing files to free up space
+          print("Checking existing files...")
+          try:
+              existing_files = list(list_repo_files(repo_id, repo_type="space", token=token))
+              if existing_files:
+                  print(f"Found {len(existing_files)} existing files. Deleting...")
+                  # Delete in batches to avoid timeout
+                  for i in range(0, len(existing_files), 50):
+                      batch = existing_files[i:i+50]
+                      delete_files(repo_id, files=batch, repo_type="space", token=token)
+                      print(f"Deleted batch {i//50 + 1}")
+                  print("Existing files cleared.")
+              else:
+                  print("No existing files found.")
+          except Exception as e:
+              print(f"Warning: Could not list/delete existing files: {e}")
+              print("Proceeding with upload anyway...")
+
+          # Step 2: Upload new files
+          print("Uploading files...")
           api.upload_folder(
               folder_path=".",
-              repo_id="mcikalmerdeka/samolet-apart-prediction",
+              repo_id=repo_id,
               repo_type="space",
-              token=os.environ["HF_TOKEN"],
+              token=token,
               ignore_patterns=[
                   ".git/*",
                   ".gitignore",
                   ".gitattributes",
                   ".github/*",
                   ".venv/*",
+                  "venv/*",
                   "__pycache__/*",
                   "*.py[oc]",
                   ".env",
+                  ".env.*",
                   "output/*",
                   "models/*.pt",
+                  "*.ipynb",
+                  "notebook.ipynb",
+                  "Study.pdf",
+                  "uv.lock",
+                  "*.log",
+                  "tests/*",
+                  ".pytest_cache/*",
+                  ".coverage",
+                  "htmlcov/*",
+                  "dist/*",
+                  "build/*",
+                  "*.egg-info/*",
               ],
           )
           print("Successfully synced to Hugging Face Space.")
