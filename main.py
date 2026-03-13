@@ -538,75 +538,7 @@ def create_gradio_interface():
                     outputs=output_manual
                 )
             
-            # Tab 2: Link-Based Input
-            with gr.Tab("🔗 Link-Based Input"):
-                gr.Markdown("""
-                ### Web Scraping Feature (Coming Soon)
-                
-                This feature would allow you to provide a direct link to a SAMOLET property listing,
-                and the system would automatically extract apartment characteristics from the webpage.
-                
-                **Example Link:**
-                ```
-                https://samolet.ru/project/oktyabrskaya-98/flats/308985/
-                ```
-                
-                **Current Status:** 🔴 **Not Available**
-                
-                Due to SAMOLET's advanced anti-bot protection, automated web scraping is currently blocked:
-                
-                **What was tried:**
-                1. **web_scraper.py** - Basic requests-based scraper
-                   - Result: HTTP 401 Unauthorized (authentication required / blocked by anti-bot protection)
-                
-                2. **browser_scraper.py** - Playwright browser automation
-                   - Result: HTTP 401 Unauthorized (authentication required / blocked by anti-bot protection)
-                
-                3. **crawl4ai_scraper.py** - Open-source AI-powered crawling
-                   - Result: HTTP 403 Forbidden ("Access to samolet.ru is forbidden")
-                   - IP-based blocking detected
-                
-                4. **firecrawl_scraper.py** - Cloud-based scraping service
-                   - Requires API key and credits
-                   - More likely to succeed but has usage costs
-                
-                **Why it doesn't work:**
-                - SAMOLET uses Cloudflare/CDN protection that detects and blocks automated access
-                - Browser fingerprinting detects headless/automated browsers
-                - IP addresses get temporarily or permanently blocked
-                - 403 Forbidden errors with "Guru meditation" responses
-                
-                **Alternative:**
-                Please use the **"Manual Input"** tab to enter apartment characteristics directly.
-                The model can still provide accurate predictions with manual input of:
-                - Total Area
-                - District/Location
-                - Property Type (rooms)
-                - Class
-                - Building Type
-                - Finishing level
-                - Floor information
-                - Ceiling Height
-                """)
-                
-                with gr.Row():
-                    with gr.Column():
-                        gr.Textbox(
-                            label="Property URL (Disabled)",
-                            value="https://samolet.ru/project/...",
-                            interactive=False,
-                            info="🔗 Link-based extraction is currently unavailable due to anti-bot protection"
-                        )
-                        
-                    with gr.Column():
-                        gr.Button(
-                            "🚫 Extract Data from Link",
-                            variant="secondary",
-                            interactive=False,
-                            size="lg"
-                        )
-            
-            # Tab 3: Test Data Evaluation
+            # Tab 2: Test Data Evaluation
             with gr.Tab("📊 Test Data Evaluation"):
                 gr.Markdown(f"""
                 ### Evaluate Model on Test Dataset

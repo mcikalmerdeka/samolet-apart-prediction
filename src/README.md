@@ -14,15 +14,6 @@ src/
 │   ├── statistics.py          # Statistical analysis tools
 │   ├── visualization.py       # Plotting and visualization
 │   └── regression_evals_and_tuning.py  # ML model evaluation & tuning
-├── scripts/             # Web scraping scripts
-│   ├── __init__.py
-│   ├── web_scraper.py         # Basic requests-based scraper
-│   ├── browser_scraper.py     # Playwright browser automation
-│   ├── crawl4ai_scraper.py   # Open-source AI crawler
-│   ├── firecrawl_scraper.py  # Cloud-based service
-│   ├── firecrawl_predict.py  # Prediction interface
-│   ├── crawl4ai_check.py     # Crawl4AI installation checker
-│   └── WEB_SCRAPING_README.md # Scraping documentation
 ├── config/              # Configuration
 │   ├── __init__.py
 │   ├── settings.py           # Paths, constants, settings
@@ -40,18 +31,6 @@ Core functionality for the machine learning pipeline:
 - **statistics.py**: Descriptive statistics for numerical/categorical/date columns
 - **visualization.py**: Dynamic plots (histograms, boxplots, heatmaps, countplots)
 - **regression_evals_and_tuning.py**: Model evaluation, hyperparameter tuning, cross-validation
-
-### `src/scripts/`
-Web scraping scripts for extracting apartment data:
-- **web_scraper.py**: Basic requests-based scraper (HTTP 403 blocked by anti-bot)
-- **browser_scraper.py**: Playwright browser automation (HTTP 403 blocked)
-- **crawl4ai_scraper.py**: Open-source AI crawler (HTTP 403 blocked)
-- **firecrawl_scraper.py**: Cloud-based service (requires API key)
-- **firecrawl_predict.py**: Prediction interface using FireCrawl
-- **crawl4ai_check.py**: Crawl4AI installation verification
-- **WEB_SCRAPING_README.md**: Comprehensive scraping documentation
-
-**Note**: All scrapers are currently blocked by SAMOLET's anti-bot protection. These scripts serve as documentation of implementation attempts.
 
 ### `src/config/`
 Configuration management:

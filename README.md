@@ -40,12 +40,6 @@ Machine learning model for predicting apartment prices based on layout character
 │   │   ├── statistics.py        # Statistical analysis
 │   │   ├── visualization.py     # Plotting utilities
 │   │   └── regression_evals_and_tuning.py  # ML evaluation
-│   ├── scripts/                 # Web scraping scripts
-│   │   ├── web_scraper.py       # Basic requests-based scraper
-│   │   ├── browser_scraper.py   # Playwright automation
-│   │   ├── crawl4ai_scraper.py # Open-source AI crawler
-│   │   ├── firecrawl_scraper.py # Cloud-based service
-│   │   └── WEB_SCRAPING_README.md # Scraping documentation
 │   ├── config/                  # Configuration
 │   │   ├── settings.py          # Paths, constants, settings
 │   │   └── logging_config.py    # Logging configuration
@@ -64,12 +58,9 @@ Machine learning model for predicting apartment prices based on layout character
 │   ├── test_data_5%_preprocessed.csv
 │   └── test_data_5%_raw.csv
 │
-├── output/                      # Plots and web scraping outputs(e.g. feature importance)
+├── output/                      # Plots and model outputs (e.g. feature importance)
 │   ├── gini_importance.png
-│   ├── permutation_importance.png
-│   ├── firecrawl_output_{hash}_{flat_id}_{timestamp}.txt
-│   ├── browser_output_{hash}_{flat_id}_{timestamp}.txt
-│   ├── webscraper_output_{hash}_{flat_id}_{timestamp}.txt
+│   └── permutation_importance.png
 ```
 
 ## 🚀 Quick Start
@@ -89,7 +80,6 @@ Then open http://127.0.0.1:7860 in your browser.
 **Features:**
 
 - **Manual Input**: Enter apartment characteristics and get price predictions
-- **Link-Based Input**: Documentation of web scraping attempts (currently blocked by anti-bot protection)
 - **Test Data Evaluation**: Compare predictions against actual prices from test dataset
 
 ### Option 2: Jupyter Notebook
@@ -138,11 +128,6 @@ Core dependencies:
 - pandas, numpy, scikit-learn
 - gradio (for web interface)
 - joblib (for model serialization)
-- beautifulsoup4 (for HTML parsing)
-
-Optional for web scraping:
-
-- playwright, crawl4ai, firecrawl-py
 
 ## 📈 Model Details
 
@@ -174,13 +159,11 @@ Optional for web scraping:
 
 - **Final_Report.md**: Complete technical documentation
 - **src/README.md**: Source code structure
-- **scripts/WEB_SCRAPING_README.md**: Scraping implementation details
 
 ## ⚠️ Known Limitations
 
 1. **Geographic**: Model trained on Moscow region data (113 districts); retraining needed for other SAMOLET regions
 2. **Temporal**: No time-based features; doesn't account for market trends
-3. **Link-Based Input**: Web scraping blocked by anti-bot protection (four approaches documented)
-4. **Outliers**: IQR method may exclude legitimate luxury properties
+3. **Outliers**: IQR method may exclude legitimate luxury properties
 
 For full assumptions, limitations, and metric interpretation in the real estate domain, see **Final_Report.md**.

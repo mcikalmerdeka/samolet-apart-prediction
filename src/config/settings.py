@@ -12,7 +12,6 @@ PROJECT_ROOT = Path(__file__).parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 MODELS_DIR = PROJECT_ROOT / "models"
 OUTPUT_DIR = PROJECT_ROOT / "output"
-SCRIPTS_DIR = PROJECT_ROOT / "scripts"
 
 # Model artifact paths
 MODEL_PATH = MODELS_DIR / "rf_tuned_model.joblib"
