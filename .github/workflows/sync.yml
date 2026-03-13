@@ -79,7 +79,8 @@ jobs:
                   ".env",
                   ".env.*",
                   "output/*",
-                  "models/*.pt",
+                  "models/*",
+                  "data/*",
                   "*.ipynb",
                   "notebook.ipynb",
                   "Study.pdf",
@@ -92,6 +93,8 @@ jobs:
                   "dist/*",
                   "build/*",
                   "*.egg-info/*",
+                  "src/scripts/*",
+                  "Final_Report.md",
               ],
           )
           print("Successfully synced to Hugging Face Space.")
